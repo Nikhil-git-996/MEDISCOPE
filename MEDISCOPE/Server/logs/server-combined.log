@@ -1,0 +1,13 @@
+{"level":"info","message":"🚀 Server running on port 4000","timestamp":"2025-10-11T17:06:36.828Z"}
+{"level":"info","message":"✅ MongoDB Connected","timestamp":"2025-10-11T17:06:36.868Z"}
+{"level":"debug","message":"Token verified for user id: 68ea39d44f0a47cde60261cd","timestamp":"2025-10-11T17:07:23.298Z"}
+{"level":"debug","message":"Token verified for user id: 68ea39d44f0a47cde60261cd","timestamp":"2025-10-11T17:10:29.804Z"}
+{"level":"info","message":"🚀 Server running on port 4000","timestamp":"2025-10-11T17:12:43.932Z"}
+{"level":"info","message":"✅ MongoDB Connected","timestamp":"2025-10-11T17:12:43.962Z"}
+{"level":"debug","message":"Token verified for user id: 68ea39d44f0a47cde60261cd","timestamp":"2025-10-11T17:13:12.258Z"}
+{"level":"debug","message":"Token verified for user id: 68ea39d44f0a47cde60261cd","timestamp":"2025-10-11T17:16:44.558Z"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [11/Oct/2025:17:18:14 +0000] \"POST /process HTTP/1.1\" - - \"http://localhost:5173/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36\"","timestamp":"2025-10-11T17:18:14.027Z"}
+{"level":"debug","message":"Token verified for user id: 68ea39d44f0a47cde60261cd","timestamp":"2025-10-11T17:20:22.555Z"}
+{"level":"info","message":"::1 - - [11/Oct/2025:17:20:25 +0000] \"POST /process HTTP/1.1\" - - \"http://localhost:5173/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36\"","timestamp":"2025-10-11T17:20:25.395Z"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [11/Oct/2025:17:20:25 +0000] \"POST /process HTTP/1.1\" - - \"http://localhost:5173/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36\"","timestamp":"2025-10-11T17:20:25.398Z"}
+{"level":"debug","message":"Token verified for user id: 68ea39d44f0a47cde60261cd","timestamp":"2025-10-11T17:20:33.431Z"}
