@@ -8,6 +8,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import base64
 from io import BytesIO
+import requests
 
 # ----------------- Logging -----------------
 logging.basicConfig(level=logging.INFO)
@@ -20,15 +21,26 @@ if gpus:
         print("✅ GPU memory growth enabled")
     except RuntimeError as e:
         print(e)
+
 # ----------------- Config -----------------
-MODEL_PATH = r"E:\MEDISCOPE\Server\final_best_model.keras"
+MODEL_URL = "https://huggingface.co/Nikhil2104/MEDISCOPE/resolve/main/final_best_model.keras"
+MODEL_PATH = "final_best_model.keras"
 IMG_SIZE = (160, 160)
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'bmp'}
+
+# ----------------- Download Model -----------------
+if not os.path.exists(MODEL_PATH):
+    logger.info("⏳ Downloading model from Hugging Face...")
+    response = requests.get(MODEL_URL)
+    response.raise_for_status()
+    with open(MODEL_PATH, "wb") as f:
+        f.write(response.content)
+    logger.info("✅ Model downloaded successfully.")
 
 # ----------------- Load Model -----------------
 logger.info("⏳ Loading ML model...")
 model = tf.keras.models.load_model(MODEL_PATH, compile=False)
-logger.info("✅ Model loaded.")
+logger.info("✅ Model loaded successfully.")
 
 class_names = [
     "Brain_Hemorrhage", "Brain_Normal", "Brain_Tumor",
@@ -43,7 +55,6 @@ def allowed_file_extension(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def correct_exif_orientation(img):
-    """Correct rotation based on EXIF orientation."""
     try:
         for orientation in ExifTags.TAGS.keys():
             if ExifTags.TAGS[orientation]=='Orientation':
@@ -63,53 +74,25 @@ def correct_exif_orientation(img):
     return img
 
 def load_and_prepare_image(img):
-    """
-    Robust preprocessing:
-    - Converts grayscale or RGBA images to RGB
-    - Corrects orientation from EXIF
-    - Crops center square region
-    - Enhances contrast
-    - Handles very small images
-    - Resizes to model input
-    """
-    # Ensure RGB
     if img.mode != "RGB":
         img = img.convert("RGB")
-
-    # Correct rotation
     img = correct_exif_orientation(img)
-
-    # Contrast enhancement (optional)
     enhancer = ImageEnhance.Contrast(img)
     img = enhancer.enhance(1.2)
-
     w, h = img.size
-
-    # Avoid extremely small images
     if min(w, h) < 32:
         img = img.resize((max(w, 32), max(h, 32)), Image.BICUBIC)
         w, h = img.size
-
-    # Center crop to square
     min_side = min(w, h)
     left = (w - min_side) // 2
     top = (h - min_side) // 2
     right = left + min_side
     bottom = top + min_side
     img = img.crop((left, top, right, bottom))
-
-    # Resize to model input
     img = img.resize(IMG_SIZE, Image.BICUBIC)
-
     return img
 
 def pil_to_model_array(pil_img):
-    """
-    Convert PIL image to normalized model input:
-    - Ensures float32 type
-    - Scales pixel values as per ResNet50 preprocessing
-    - Handles unexpected channel issues
-    """
     arr = np.array(pil_img)
     if arr.ndim != 3 or arr.shape[2] != 3:
         arr = np.stack([arr]*3, axis=-1) if arr.ndim == 2 else arr[:, :, :3]
@@ -146,8 +129,6 @@ def predict():
         return jsonify({"error": "Missing payload"}), 400
 
     payload = data["payload"]
-
-    # Handle image input: base64 string or local path
     img = None
     if "image_base64" in payload:
         try:
@@ -161,13 +142,11 @@ def predict():
     else:
         return jsonify({"error": "No image provided"}), 400
 
-    # Optional patient info
     age = payload.get("age")
     weight = payload.get("weight")
     symptoms = payload.get("symptoms", "")
     body_part = payload.get("body_part", "")
 
-    # Predict
     try:
         pred_class, confidence = predict_with_tta(img)
     except Exception as e:
@@ -186,7 +165,6 @@ def predict():
             "body_part": body_part
         }
     }
-
     return jsonify(result), 200
 
 if __name__ == "__main__":
