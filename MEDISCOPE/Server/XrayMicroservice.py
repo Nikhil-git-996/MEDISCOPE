@@ -10,15 +10,9 @@ import base64
 from io import BytesIO
 import requests
 
-# -------------------------------------------------------
-# Logging Setup
-# -------------------------------------------------------
+# ----------------- Logging -----------------
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("ImageService")
-
-# -------------------------------------------------------
-# GPU Memory Growth (Safe for CPU too)
-# -------------------------------------------------------
 gpus = tf.config.experimental.list_physical_devices('GPU')
 if gpus:
     try:
@@ -28,43 +22,26 @@ if gpus:
     except RuntimeError as e:
         print(e)
 
-# -------------------------------------------------------
-# Configurations
-# -------------------------------------------------------
+# ----------------- Config -----------------
 MODEL_URL = "https://huggingface.co/Nikhil2104/MEDISCOPE/resolve/main/final_best_model.keras"
-MODEL_PATH = "/tmp/final_best_model.keras"   # ✅ Safe writable path for Render
+MODEL_PATH = "final_best_model.keras"
 IMG_SIZE = (160, 160)
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'bmp'}
 
-# -------------------------------------------------------
-# Model Download (Render-safe)
-# -------------------------------------------------------
+# ----------------- Download Model -----------------
 if not os.path.exists(MODEL_PATH):
-    try:
-        logger.info("📥 Downloading model from Hugging Face...")
-        response = requests.get(MODEL_URL, timeout=60)
-        response.raise_for_status()
-        with open(MODEL_PATH, "wb") as f:
-            f.write(response.content)
-        logger.info("✅ Model downloaded successfully.")
-    except Exception as e:
-        logger.error(f"❌ Model download failed: {e}")
-        raise RuntimeError("Model could not be downloaded from Hugging Face.")
+    logger.info("⏳ Downloading model from Hugging Face...")
+    response = requests.get(MODEL_URL)
+    response.raise_for_status()
+    with open(MODEL_PATH, "wb") as f:
+        f.write(response.content)
+    logger.info("✅ Model downloaded successfully.")
 
-# -------------------------------------------------------
-# Load TensorFlow Model
-# -------------------------------------------------------
-try:
-    logger.info("⏳ Loading ML model...")
-    model = tf.keras.models.load_model(MODEL_PATH, compile=False)
-    logger.info("✅ Model loaded successfully.")
-except Exception as e:
-    logger.error(f"❌ Failed to load model: {e}")
-    raise
+# ----------------- Load Model -----------------
+logger.info("⏳ Loading ML model...")
+model = tf.keras.models.load_model(MODEL_PATH, compile=False)
+logger.info("✅ Model loaded successfully.")
 
-# -------------------------------------------------------
-# Class Labels
-# -------------------------------------------------------
 class_names = [
     "Brain_Hemorrhage", "Brain_Normal", "Brain_Tumor",
     "Chest_PNEUMONIA", "Chest_Xray_Normal",
@@ -73,16 +50,14 @@ class_names = [
     "Lung_Cancer", "Lungs_Normal", "Lungs_TB", "No_Lung_Cancer"
 ]
 
-# -------------------------------------------------------
-# Helper Functions
-# -------------------------------------------------------
+# ----------------- Helpers -----------------
 def allowed_file_extension(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def correct_exif_orientation(img):
     try:
         for orientation in ExifTags.TAGS.keys():
-            if ExifTags.TAGS[orientation] == 'Orientation':
+            if ExifTags.TAGS[orientation]=='Orientation':
                 break
         exif = img._getexif()
         if exif is None:
@@ -143,9 +118,7 @@ def decode_base64_image(data):
     except Exception as e:
         raise ValueError("Invalid base64 image data")
 
-# -------------------------------------------------------
-# Flask App Setup
-# -------------------------------------------------------
+# ----------------- Flask App -----------------
 app = Flask(__name__)
 CORS(app)
 
@@ -194,9 +167,10 @@ def predict():
     }
     return jsonify(result), 200
 
-# -------------------------------------------------------
-# App Runner
-# -------------------------------------------------------
 if __name__ == "__main__":
+    # Use Render's assigned PORT or fallback to 5000 locally
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=False)
+    debug_mode = os.environ.get("FLASK_DEBUG", "False").lower() in ("true", "1", "t")
+
+    logger.info(f"🚀 Starting server on 0.0.0.0:{port}, debug={debug_mode}")
+    app.run(host="0.0.0.0", port=port, debug=debug_mode)
