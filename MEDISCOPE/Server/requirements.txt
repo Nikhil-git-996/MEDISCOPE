@@ -1,0 +1,12 @@
+flask
+flask-cors
+werkzeug
+numpy
+pillow
+requests
+PyMuPDF
+easyocr
+google-generativeai
+python-dotenv
+googletrans==4.0.0-rc1
+tensorflow==2.10.0
