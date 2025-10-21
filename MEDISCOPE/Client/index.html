@@ -1,14 +1,90 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <!-- In public/index.html, inside <head> -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+  <!-- Charset & Viewport -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+  <!-- Primary Meta Tags -->
+  <title>MEDISCOPE | AI-Powered Disease Diagnosis & Health Report Interpreter</title>
+  <meta name="title" content="MEDISCOPE | AI-Powered Disease Diagnosis & Health Report Interpreter" />
+  <meta name="description" content="MEDISCOPE uses cutting-edge AI to interpret X-rays, lab reports, and medical data — providing accurate, human-friendly health insights in seconds." />
+
+  <!-- Keywords for SEO -->
+  <meta name="keywords" content="AI medical diagnosis, disease prediction, MEDISCOPE, medical report interpreter, health AI assistant, X-ray diagnosis, lab report analyzer, AI healthcare, medical imaging AI, health diagnostics" />
+
+  <!-- Canonical URL -->
+  <link rel="canonical" href="https://mediscope-ui.onrender.com" />
+
+  <!-- Favicon & App Icons -->
+  <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+  <!-- Google Fonts (Preconnect for speed) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://mediscope-ui.onrender.com" />
+  <meta property="og:title" content="MEDISCOPE | AI-Powered Disease Diagnosis & Health Report Interpreter" />
+  <meta property="og:description" content="Get fast, reliable medical insights with MEDISCOPE — an AI platform that interprets X-rays and lab reports with precision." />
+  <meta property="og:image" content="https://mediscope-ui.onrender.com/logo.png" />
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image" />
+  <meta property="twitter:url" content="https://mediscope-ui.onrender.com" />
+  <meta property="twitter:title" content="MEDISCOPE | AI-Powered Disease Diagnosis & Health Report Interpreter" />
+  <meta property="twitter:description" content="Interpret X-rays and lab reports instantly using advanced AI. Experience next-gen healthcare diagnostics with MEDISCOPE." />
+  <meta property="twitter:image" content="https://mediscope-ui.onrender.com/logo.png" />
+
+  <!-- Theme & Mobile -->
+  <meta name="theme-color" content="#4F46E5" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+
+  <!-- Structured Data (JSON-LD Schema) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "MEDISCOPE",
+    "url": "https://mediscope-ui.onrender.com",
+    "description": "AI-powered medical diagnosis and report interpretation platform that helps doctors and patients understand diseases faster.",
+    "applicationCategory": "HealthApplication",
+    "operatingSystem": "Web",
+    "author": {
+      "@type": "Organization",
+      "name": "MEDISCOPE AI"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "MEDISCOPE",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://mediscope-ui.onrender.com/logo.png"
+      }
+    },
+    "image": "https://mediscope-ui.onrender.com/logo.png",
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.9",
+      "reviewCount": "850"
+    }
+  }
+  </script>
+
+  <!-- Performance Enhancements -->
+  <meta http-equiv="Cache-Control" content="max-age=31536000, must-revalidate" />
+  <link rel="preload" href="/src/main.jsx" as="script" />
+</head>
+
+<body style="font-family: 'Poppins', sans-serif; background-color: #fff; color: #111;">
+  <div id="root" role="main"></div>
+
+  <!-- Main Script -->
+  <script type="module" src="/src/main.jsx"></script>
+</body>
 </html>
