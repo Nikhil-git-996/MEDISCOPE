@@ -1,123 +1,104 @@
 from flask import Flask, request, jsonify
-import os, logging, tempfile, gc
+import os, logging
 from werkzeug.utils import secure_filename
 import fitz  # PyMuPDF
-import easyocr
-import google.generativeai as genai
 from flask_cors import CORS
+import google.generativeai as genai
 
-# ----------------------------------
-# Setup
-# ----------------------------------
+# ----------------- Setup -----------------
 app = Flask(__name__)
 CORS(app)
 
-UPLOAD_FOLDER = "./uploads"
+UPLOAD_FOLDER = './uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 logging.basicConfig(level=logging.INFO)
 
-# ✅ Lazy load OCR model only once
+# ----------------- Lazy OCR -----------------
 ocr_reader = None
-
-# ✅ Load Gemini config (safe)
-genai.configure(api_key=os.getenv("GEMINI_API_KEY", "AIzaSyDBfH2xSnbEQejRsjLGPlokpSGUIM0N4dA"))
-
-# ----------------------------------
-# OCR Extraction
-# ----------------------------------
-def extract_text(file_path: str) -> str:
+def get_ocr_reader():
     global ocr_reader
-    ext = os.path.splitext(file_path)[1].lower()
-    text = ""
+    if ocr_reader is None:
+        import easyocr
+        ocr_reader = easyocr.Reader(['en'], gpu=False)
+    return ocr_reader
 
+# ----------------- Gemini API -----------------
+API_KEY = os.environ.get("API_KEY")
+if not API_KEY:
+    raise ValueError("API_KEY environment variable not set")
+genai.configure(api_key=API_KEY)
+
+def summarize_with_gemini(text):
+    prompt = f"""
+You are a medical assistant. Summarize key points of this report in simple terms:
+
+{text[:5000]}
+"""
     try:
-        if ext in [".jpg", ".jpeg", ".png", ".bmp", ".tiff"]:
-            if ocr_reader is None:
-                ocr_reader = easyocr.Reader(["en"], gpu=False)
-            result = ocr_reader.readtext(file_path, detail=0)
-            text = "\n".join(result) if result else "[No text]"
-        else:
-            with fitz.open(file_path) as doc:
-                for page in doc:
-                    text += page.get_text("text") + "\n"
-    except Exception as e:
-        logging.exception("OCR/PDF error:")
-        return f"[Error extracting text: {e}]"
-    finally:
-        gc.collect()
-
-    return text.strip()
-
-
-# ----------------------------------
-# Gemini Summary
-# ----------------------------------
-def summarize_with_gemini(text: str) -> str:
-    if not text.strip():
-        return "[No content to summarize]"
-    try:
-        model = genai.GenerativeModel("models/gemini-2.0-flash-lite")  # ✅ lighter model
-        resp = model.generate_content(
-            f"Summarize this medical report simply:\n\n{text[:4000]}"
-        )
+        model = genai.GenerativeModel("models/gemini-2.5-flash")
+        resp = model.generate_content(prompt)
         return resp.text.strip() if hasattr(resp, "text") else "[No summary]"
     except Exception as e:
-        logging.exception("Gemini API failed:")
-        return f"[Gemini failed: {e}]"
+        logging.exception("Gemini failed:")
+        return f"Gemini failed: {str(e)}"
 
+# ----------------- OCR -----------------
+def extract_text(file_path):
+    ext = os.path.splitext(file_path)[1].lower()
+    text = ""
+    if ext in ['.jpg', '.jpeg', '.png', '.bmp', '.tiff']:
+        reader = get_ocr_reader()
+        res = reader.readtext(file_path, detail=0)
+        text = "\n".join(res) if res else "[No text]"
+    else:  # PDF
+        with fitz.open(file_path) as doc:
+            for page in doc:
+                text += page.get_text() + "\n"
+    return text
 
-# ----------------------------------
-# Flask Route
-# ----------------------------------
-@app.route("/parse", methods=["POST"])
+# ----------------- Routes -----------------
+@app.route('/parse', methods=['POST'])
 def parse():
-    gc.collect()  # clean before processing
-
-    # Case 1: Node sends file path
-    if "file_path" in request.form:
-        file_path = request.form["file_path"]
+    if 'file_path' in request.form:
+        file_path = request.form['file_path']
         if not os.path.exists(file_path):
             return jsonify({"error": f"File not found: {file_path}"}), 400
-
         text = extract_text(file_path)
         summary = summarize_with_gemini(text)
-        gc.collect()
-        return jsonify({"message": "Parsed (from path)", "summary": summary})
+        return jsonify({
+            "message": "Parsed successfully (from path)",
+            "file": file_path,
+            "summary": summary
+        })
 
-    # Case 2: Direct upload
-    if "files" not in request.files:
+    if 'files' not in request.files:
         return jsonify({"error": "No files or file_path provided"}), 400
 
-    files = request.files.getlist("files")
+    files = request.files.getlist('files')
     combined_text = ""
     diagnostics = {}
 
     for f in files:
         filename = secure_filename(f.filename)
-        path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+        path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         f.save(path)
-
-        text = extract_text(path)
-        combined_text += f"\n=== {filename} ===\n{text}\n"
-        diagnostics[filename] = {"length": len(text)}
-
-        # delete file after reading to save memory
-        os.remove(path)
+        try:
+            txt = extract_text(path)
+            combined_text += f"\n=== {filename} ===\n{txt}\n"
+            diagnostics[filename] = {"text_length": len(txt)}
+        except Exception as e:
+            diagnostics[filename] = {"error": str(e)}
 
     summary = summarize_with_gemini(combined_text)
-    gc.collect()
-
     return jsonify({
-        "message": "Parsed successfully",
+        "message": "Parsed successfully (uploaded)",
         "diagnostics": diagnostics,
         "summary": summary
     })
 
-
-# ----------------------------------
-# Run App
-# ----------------------------------
+# ----------------- Main -----------------
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5001)
+    PORT = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=PORT, debug=False)
